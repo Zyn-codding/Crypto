@@ -22,7 +22,7 @@
       margin: 100px auto;
       box-shadow: 0 0 15px rgba(0,0,0,0.5);
     }
-    input {
+    input, select {
       width: 100%;
       padding: 10px;
       margin: 5px 0;
@@ -35,6 +35,175 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      font-weight: bold;
+    }
+    .buy { background: #16c784; color: white; }
+    .sell { background: #ea3943; color: white; }
+  </style>
+</head>
+<body>
+  <!-- Login Page -->
+  <div id="loginPage" class="container">
+    <div class="card">
+      <h2>Login</h2>
+      <input type="text" id="username" placeholder="Username">
+      <input type="password" id="password" placeholder="Password">
+      <button onclick="login()">Login</button>
+      <p id="loginError" style="color:red;"></p>
+    </div>
+  </div>
+
+  <!-- Main Page -->
+  <div id="mainPage" class="container">
+    <h2>Crypto Simulation</h2>
+    <p>Saldo: $<span id="balance">0</span></p>
+    <label for="coinSelect">Select Coin:</label>
+    <select id="coinSelect" onchange="changeCoin()"></select>
+    <canvas id="cryptoChart" height="300"></canvas>
+    <div>
+      <button class="buy" onclick="buy()">BUY</button>
+      <button class="sell" onclick="sell()">SELL</button>
+    </div>
+  </div>
+
+<script>
+  const users = {
+    "ACC_DEV": { password: "ZYN", balance: 1000 },
+    "USER_123": { password: "user1", balance: 10 },
+    "Anomaly1": { password: "Tung", balance: 10 }
+  };
+
+  const coins = {
+    BTC: 50000,
+    ETH: 3000,
+    LTC: 200,
+    XEM: 0.05,
+    BAT: 0.25,
+    BNB: 350,
+    VIDY: 0.001,
+    NEO: 10,
+    EOS: 0.7,
+    TRX: 0.1
+  };
+
+  let currentUser = null;
+  let balance = 0;
+  let chart, chartData = [];
+  let currentCoin = "BTC";
+  let position = null; // {coin, price}
+  let timer;
+
+  window.onload = () => {
+    if (!localStorage.getItem("loggedUser")) {
+      document.getElementById("loginPage").style.display = "block";
+    } else {
+      currentUser = localStorage.getItem("loggedUser");
+      balance = parseFloat(localStorage.getItem(currentUser+"_balance")) || users[currentUser].balance;
+      initMain();
+    }
+  };
+
+  function login() {
+    let u = document.getElementById("username").value;
+    let p = document.getElementById("password").value;
+    if (users[u] && users[u].password === p) {
+      currentUser = u;
+      balance = parseFloat(localStorage.getItem(u+"_balance")) || users[u].balance;
+      localStorage.setItem("loggedUser", u);
+      initMain();
+    } else {
+      document.getElementById("loginError").innerText = "Invalid credentials!";
+    }
+  }
+
+  function initMain() {
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("mainPage").style.display = "block";
+    document.getElementById("balance").innerText = balance.toFixed(2);
+    let sel = document.getElementById("coinSelect");
+    sel.innerHTML = "";
+    for (let c in coins) {
+      let opt = document.createElement("option");
+      opt.value = c;
+      opt.text = c;
+      sel.appendChild(opt);
+    }
+    changeCoin();
+  }
+
+  function changeCoin() {
+    currentCoin = document.getElementById("coinSelect").value;
+    chartData = generateInitialData(coins[currentCoin]);
+    if (chart) chart.destroy();
+    clearInterval(timer);
+    let ctx = document.getElementById("cryptoChart").getContext("2d");
+    chart = new Chart(ctx, {
+      type: 'candlestick',
+      data: { datasets: [{ label: currentCoin, data: chartData }] },
+      options: {
+        plugins: { legend: { labels: { color: '#fff' } } },
+        scales: {
+          x: { ticks: { color: '#fff' } },
+          y: { ticks: { color: '#fff' } }
+        }
+      }
+    });
+    timer = setInterval(() => updateChart(), 2000);
+  }
+
+  function generateInitialData(price) {
+    let data = [];
+    for (let i=0; i<30; i++) {
+      let open = price;
+      let close = open + (Math.random()-0.5)*open*0.02;
+      let high = Math.max(open, close) + Math.random()*open*0.01;
+      let low = Math.min(open, close) - Math.random()*open*0.01;
+      data.push({x: i, o: open, h: high, l: low, c: close});
+      price = close;
+    }
+    return data;
+  }
+
+  function updateChart() {
+    let last = chartData[chartData.length-1];
+    let idx = chartData.length;
+    let open = last.c;
+    let close = open + (Math.random()-0.5)*open*0.02;
+    let high = Math.max(open, close) + Math.random()*open*0.01;
+    let low = Math.min(open, close) - Math.random()*open*0.01;
+    chartData.push({x: idx, o: open, h: high, l: low, c: close});
+    if (chartData.length > 50) chartData.shift();
+    chart.update();
+
+    // Update floating PnL if holding position
+    if (position && position.coin === currentCoin) {
+      let profit = (close - position.price);
+      if (["BTC","ETH","LTC","BNB","NEO"].includes(currentCoin)) profit *= 0.1;
+      document.getElementById("balance").innerText = (balance+profit).toFixed(2);
+    }
+  }
+
+  function buy() {
+    if (position) { alert("You already have a position! Sell first."); return; }
+    let last = chartData[chartData.length-1];
+    position = {coin: currentCoin, price: last.c};
+    alert("Bought " + currentCoin + " at $" + last.c.toFixed(2));
+  }
+
+  function sell() {
+    if (!position) { alert("No active position!"); return; }
+    let last = chartData[chartData.length-1];
+    let profit = (last.c - position.price);
+    if (["BTC","ETH","LTC","BNB","NEO"].includes(currentCoin)) profit *= 0.1;
+    balance += profit;
+    localStorage.setItem(currentUser+"_balance", balance);
+    document.getElementById("balance").innerText = balance.toFixed(2);
+    alert("Sold " + currentCoin + " at $" + last.c.toFixed(2) + " | P/L: $" + profit.toFixed(2));
+    position = null;
+  }
+</script>
+</body>
+</html>      cursor: pointer;
       font-weight: bold;
     }
     .buy { background: #16c784; color: white; }
