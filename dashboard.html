@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Crypto Sim - Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial"></script>
+</head>
+<body>
+  <div class="container">
+    <h2>Crypto Simulation</h2>
+    <p>Saldo: $<span id="balance">0</span></p>
+    <label for="coinSelect">Select Coin:</label>
+    <select id="coinSelect" onchange="changeCoin()"></select>
+    <canvas id="cryptoChart" height="300"></canvas>
+    <div>
+      <button class="buy" onclick="buy()">BUY</button>
+      <button class="sell" onclick="sell()">SELL</button>
+    </div>
+    <h3>Riwayat Transaksi</h3>
+    <ul id="history"></ul>
+  </div>
+  <script src="coins.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
