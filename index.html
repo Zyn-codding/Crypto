@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spin & Kripto</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        /* Styling untuk Roda Putar */
+        .wheel-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin-bottom: 20px;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            transition: transform 5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .wheel-segment {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            clip: rect(0, auto, auto, 100px); /* Setengah lingkaran */
+            transform-origin: 50% 50%;
+        }
+
+        .wheel-segment div {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+
+        /* Styling untuk Tombol */
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* Styling untuk Kripto Simulasi */
+        .kripto-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .kripto-display {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Roda Putar Hadiah</h2>
+    <div class="wheel-container">
+        <div class="wheel" id="wheel">
+            <!-- Segmen roda akan ditambahkan menggunakan JavaScript -->
+        </div>
+    </div>
+    <button onclick="spinWheel()">Spin!</button>
+
+    <h2>Simulasi Kripto</h2>
+    <div class="kripto-container">
+        <div class="kripto-display" id="kriptoValue">Nilai Kripto: $100</div>
+        <button onclick="buyKripto()">Buy</button>
+        <button onclick="sellKripto()">Sell</button>
+        <p>Place your bet (versi kripto)</p>
+    </div>
+
+    <script>
+        const wheel = document.getElementById('wheel');
+        const kriptoValueDisplay = document.getElementById('kriptoValue');
+        let kriptoValue = 100; // Nilai awal kripto
+        let spinning = false;
+
+        // Data untuk roda putar
+        const wheelValues = [1, 10, 15, 20, 25, 30, 35, 40, 45, 50, 100];
+        const segmentCount = wheelValues.length;
+        const segmentAngle = 360 / segmentCount;
+
+        // Fungsi untuk menghasilkan warna acak
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        // Mengisi roda dengan segmen
+        for (let i = 0; i < segmentCount; i++) {
+            const segment = document.createElement('div');
+            segment.classList.add('wheel-segment');
+            segment.style.transform = `rotate(${i * segmentAngle}deg)`;
+            segment.style.clip = 'rect(0, 200px, 200px, 100px)'; // Sesuaikan klip di sini
+
+            const segmentContent = document.createElement('div');
+            segmentContent.textContent = '$' + wheelValues[i];
+            segmentContent.style.backgroundColor = getRandomColor();
+            segment.appendChild(segmentContent);
+            wheel.appendChild(segment);
+        }
+
+        // Fungsi untuk memutar roda
+        function spinWheel() {
+            if (spinning) return;
+            spinning = true;
+
+            const randomSpin = Math.floor(Math.random() * 3600) + 3600; // Putaran acak
+            wheel.style.transition = 'transform 5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            wheel.style.transform = `rotate(${randomSpin}deg)`;
+
+            setTimeout(() => {
+                spinning = false;
+                wheel.style.transition = 'none';
+                wheel.style.transform = `rotate(${randomSpin % 360}deg)`;
+
+                // Hitung segmen yang menang
+                const winningSegment = Math.floor((randomSpin % 360) / segmentAngle);
+                alert(`Selamat! Anda memenangkan $${wheelValues[winningSegment]}`);
+            }, 5000);
+        }
+
+        // Fungsi untuk simulasi Buy Kripto
+        function buyKripto() {
+            // Simulasi nilai naik
+            kriptoValue += Math.random() * 10;
+            kriptoValueDisplay.textContent = `Nilai Kripto: $${kriptoValue.toFixed(2)}`;
+        }
+
+        // Fungsi untuk simulasi Sell Kripto
+        function sellKripto() {
+            // Simulasi nilai turun
+            kriptoValue -= Math.random() * 10;
+            kriptoValueDisplay.textContent = `Nilai Kripto: $${kriptoValue.toFixed(2)}`;
+            alert(`Anda menjual kripto senilai $${kriptoValue.toFixed(2)}`);
+        }
+    </script>
+</body>
+</html>
